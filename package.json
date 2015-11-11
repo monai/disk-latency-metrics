@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "main": "latency.js",
+  "bin": "bin/disk-latency-metrics",
   "scripts": {
     "start": "sudo node latency.js -u $(id -u) -g $(id -g)",
     "test": "echo \"Error: no test specified\" && exit 1"
