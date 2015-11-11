@@ -2,11 +2,6 @@
 
 #pragma D option quiet
 
-dtrace:::BEGIN
-{
-    
-}
-
 io:::start
 {
     start_time[arg0] = timestamp;
@@ -22,11 +17,6 @@ io:::done
 
 tick-1s
 {
-    printa("%d\t%d\t%@d\n", @a);
+    printa("%d-%d\t%@d\n", @a);
     trunc(@a);
-}
-
-dtrace:::END
-{
-    
 }

@@ -3,11 +3,25 @@ var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 var async = require('async');
 var plist = require('plist');
+var sconsole = require('sconsole');
 var minimist = require('minimist');
 var influent = require('influent');
+var indent = require('indent-string');
+var prettyjson = require('prettyjson');
+var pkg = require('./package');
+
 var argv = minimist(process.argv.slice(2), {
     alias: { u: 'uid', g: 'gid' },
     default: { }
+});
+
+sconsole.setup({
+    upto: sconsole.priority.info,
+    ident: pkg.name,
+    stdio: true,
+    syslog: {
+        upto: sconsole.priority.error
+    }
 });
 
 var conf = {
@@ -36,8 +50,9 @@ async.series([
 ], end);
 
 function setupInflux(done) {
+    sconsole.info('Setup InfluxDB');
     influent
-    .createClient(conf.influx)
+    .createHttpClient(conf.influx)
     .then(function (client) {
         options.influx = client;
         done(null);
@@ -48,6 +63,7 @@ function setupInflux(done) {
 }
 
 function setupTrace(done) {
+    sconsole.info('Setup DTrace');
     var cp = spawn(path.resolve(__dirname, 'disklatency.d'));
     
     if (argv.gid) process.setgid(argv.gid);
@@ -75,37 +91,39 @@ function setupTrace(done) {
 }
 
 function cpError(error) {
-    console.error(error);
+    sconsole.error(error);
 }
 
 function cpExit(code) {
     if (code > 0) {
-        console.error('Child process exit code: '+ code);
+        sconsole.error('Child process exit code: '+ code);
     }
 }
 
 function cpData(data) {
-    var disk, time;
+    var disk, time, timestamp;
     
     data = data.split('\t');
-    disk = data[0] +'-'+ data[1];
-    disk = options.disks[disk];
-    time = data[2];
+    disk = data[0];
+    disk = options.disks[disk].uuid;
+    time = parseInt(data[1], 10);
+    timestamp = Date.now() +'000000';
     
-    options.influx.writeOne({
-        key: disk,
+    options.influx.write({
+        key: 'disk_latency',
         tags: {
-            type: disk
+            disk: disk
         },
         fields: {
-            time: time
+            io_delta: time
         },
-        timestamp: Date.now()
+        timestamp: timestamp
     })
     .catch(cpError);
 }
 
 function getDevices(done) {
+    sconsole.info('Get devices');
     var command = 'stat -f "%N%t%Hr%t%Lr" /dev/disk*';
     exec(command, function (error, stdout, stderr) {
         if (error) {
@@ -128,18 +146,19 @@ function getDevices(done) {
 }
 
 function getDeviceUUIDs(done) {
+    sconsole.info('Get device UUIDs');
     async.map(options.disks, iterator, _done);
     
     function _done(error, disks) {
         if (error) {
             done(error);
         } else {
-            disks = disks.filter(n => n[1]);
+            disks = disks.filter(n => n.uuid && n.mount);
             options.disks = {};
             disks.forEach(function (disk) {
-                options.disks[disk[0]] = disk[1];
+                options.disks[disk.id] = disk;
             });
-            
+            printDisks(disks);
             done(null);
         }
     }
@@ -151,7 +170,12 @@ function getDeviceUUIDs(done) {
                 next(error);
             } else {
                 stdout = plist.parse(stdout);
-                next(null, [disk[0], stdout.DiskUUID]);
+                next(null, {
+                    id    : disk[0],
+                    uuid  : stdout.DiskUUID,
+                    mount : stdout.MountPoint,
+                    node  : stdout.DeviceNode
+                });
             }
         });
     }
@@ -159,7 +183,14 @@ function getDeviceUUIDs(done) {
 
 function end(error) {
     if (error) {
-        console.error(error);
+        sconsole.error(error);
         process.exit(1);
     }
+}
+
+function printDisks(disks) {
+    disks = Object.keys(disks).map(key => disks[key]);
+    disks = prettyjson.render(disks);
+    disks = indent(disks, ' ', 7);
+    sconsole.info('\n'+ disks);
 }
