@@ -1,6 +1,7 @@
 var path = require('path');
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
+var rc = require('rc');
 var async = require('async');
 var plist = require('plist');
 var sconsole = require('sconsole');
@@ -9,16 +10,7 @@ var indent = require('indent-string');
 var prettyjson = require('prettyjson');
 var pkg = require('./package');
 
-sconsole.setup({
-    upto: sconsole.priority.info,
-    ident: pkg.name,
-    stdio: true,
-    syslog: {
-        upto: sconsole.priority.error
-    }
-});
-
-var conf = {
+var conf = rc(pkg.name, {
     devices: '/dev/disk*',
     influx: {
         username : 'local',
@@ -29,8 +21,18 @@ var conf = {
             host     : 'localhost',
             port     : 8086
         }
+    },
+    sconsole: {
+        upto: sconsole.priority.info,
+        ident: pkg.name,
+        stdio: true,
+        syslog: {
+            upto: sconsole.priority.error
+        }
     }
-};
+});
+
+sconsole.setup(conf.sconsole);
 
 var options = {
     influx: null,
