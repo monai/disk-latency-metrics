@@ -68,7 +68,7 @@ function setupTrace(done) {
     sconsole.info('Setup DTrace');
     var cp = spawn(path.resolve(__dirname, 'disklatency.d'));
     
-    cp.on('error', cpError);
+    cp.on('error', sconsole.error);
     cp.on('exit', cpExit);
 
     cp.stdout.on('readable', function () {
@@ -76,7 +76,7 @@ function setupTrace(done) {
     });
 
     cp.stderr.on('readable', function () {
-        cpError(new Error('Child process error:\n'+ read(cp.stderr)));
+        sconsole.error(new Error('Child process error:\n'+ read(cp.stderr)));
     });
     
     function read(stream) {
@@ -87,10 +87,6 @@ function setupTrace(done) {
     }
     
     done(null);
-}
-
-function cpError(error) {
-    sconsole.error(error);
 }
 
 function cpExit(code) {
