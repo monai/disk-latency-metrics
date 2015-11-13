@@ -1,6 +1,6 @@
 {
   "name": "disk-latency-metrics",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Disk latency metrics",
   "main": "index.js",
   "bin": "bin/disk-latency-metrics",
