@@ -100,21 +100,26 @@ function cpData(data) {
     
     data = data.split('\t');
     disk = data[0];
-    disk = options.disks[disk].uuid;
+    disk = options.disks[disk];
+    disk = disk && disk.uuid;
     time = parseInt(data[1], 10);
     timestamp = Date.now() +'000000';
     
-    options.influx.write({
-        key: 'disk_latency',
-        tags: {
-            disk: disk
-        },
-        fields: {
-            io_delta: time
-        },
-        timestamp: timestamp
-    })
-    .catch(cpError);
+    if ( ! disk) {
+        sconsole.error(new Error('Unknown disk: '+ data[0]))
+    } else {
+        options.influx.write({
+            key: 'disk_latency',
+            tags: {
+                disk: disk
+            },
+            fields: {
+                io_delta: time
+            },
+            timestamp: timestamp
+        })
+        .catch(sconsole.error);
+    }
 }
 
 function getDevices(done) {
