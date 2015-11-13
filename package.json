@@ -1,8 +1,8 @@
 {
   "name": "disk-latency-metrics",
   "version": "0.0.0",
-  "description": "",
-  "main": "latency.js",
+  "description": "Disk latency metrics",
+  "main": "index.js",
   "bin": "bin/disk-latency-metrics",
   "scripts": {
     "start": "sudo node latency.js",
