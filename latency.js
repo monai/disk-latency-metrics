@@ -4,16 +4,10 @@ var spawn = require('child_process').spawn;
 var async = require('async');
 var plist = require('plist');
 var sconsole = require('sconsole');
-var minimist = require('minimist');
 var influent = require('influent');
 var indent = require('indent-string');
 var prettyjson = require('prettyjson');
 var pkg = require('./package');
-
-var argv = minimist(process.argv.slice(2), {
-    alias: { u: 'uid', g: 'gid' },
-    default: { }
-});
 
 sconsole.setup({
     upto: sconsole.priority.info,
@@ -70,9 +64,6 @@ function setupInflux(done) {
 function setupTrace(done) {
     sconsole.info('Setup DTrace');
     var cp = spawn(path.resolve(__dirname, 'disklatency.d'));
-    
-    if (argv.gid) process.setgid(argv.gid);
-    if (argv.uid) process.setuid(argv.uid);
     
     cp.on('error', cpError);
     cp.on('exit', cpExit);
