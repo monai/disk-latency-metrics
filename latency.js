@@ -19,6 +19,7 @@ sconsole.setup({
 });
 
 var conf = {
+    devices: '/dev/disk*',
     influx: {
         username : 'local',
         password : 'local',
@@ -120,7 +121,7 @@ function cpData(data) {
 
 function getDevices(done) {
     sconsole.info('Get devices');
-    var command = 'stat -f "%Hr-%Lr%t%N" /dev/disk*';
+    var command = 'stat -f "%Hr-%Lr%t%N" '+ conf.devices;
     exec(command, function (error, stdout, stderr) {
         var out = stdout;
         if (error) {
