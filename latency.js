@@ -47,7 +47,7 @@ async.series([
         async.waterfall([
             getDevices,
             getDeviceUUIDs,
-            printDisks
+            printDevices
         ], next)
     },
     setupInflux,
@@ -186,7 +186,7 @@ function end(error) {
     }
 }
 
-function printDisks(disks, done) {
+function printDevices(disks, done) {
     var disks = options.disks;
     disks = Object.keys(disks).map(key => disks[key]);
     disks = prettyjson.render(disks);
