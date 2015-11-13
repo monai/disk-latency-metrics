@@ -39,12 +39,17 @@ var conf = {
 
 var options = {
     influx: null,
-    disks: null
+    disks: {}
 };
 
 async.series([
-    getDevices,
-    getDeviceUUIDs,
+    function (next) {
+        async.waterfall([
+            getDevices,
+            getDeviceUUIDs,
+            printDisks
+        ], next)
+    },
     setupInflux,
     setupTrace
 ], end);
@@ -124,42 +129,35 @@ function cpData(data) {
 
 function getDevices(done) {
     sconsole.info('Get devices');
-    var command = 'stat -f "%N%t%Hr%t%Lr" /dev/disk*';
+    var command = 'stat -f "%Hr-%Lr%t%N" /dev/disk*';
     exec(command, function (error, stdout, stderr) {
+        var out = stdout;
         if (error) {
             done(error);
         } else {
-            stdout = stdout
+            out = out
             .trim()
             .split('\n')
             .map(l => l.split('\t'))
-            .filter(n => n[0].match(/s\d+$/))
-            .reduce(function (agg, curr) {
-                var key = curr[1] +'-'+ curr[2];
-                agg.push([key, curr[0]]);
-                return agg;
-            }, []);
-            options.disks = stdout;
-            done(null);
+            .filter(n => n[1].match(/s\d+$/))
+            done(null, out);
         }
     });
 }
 
-function getDeviceUUIDs(done) {
+function getDeviceUUIDs(disks, done) {
     sconsole.info('Get device UUIDs');
-    async.map(options.disks, iterator, _done);
+    async.map(disks, iterator, _done);
     
     function _done(error, disks) {
         if (error) {
             done(error);
         } else {
             disks = disks.filter(n => n.uuid && n.mount);
-            options.disks = {};
             disks.forEach(function (disk) {
                 options.disks[disk.id] = disk;
             });
-            printDisks(disks);
-            done(null);
+            done(null, disks);
         }
     }
     
@@ -188,9 +186,11 @@ function end(error) {
     }
 }
 
-function printDisks(disks) {
+function printDisks(disks, done) {
+    var disks = options.disks;
     disks = Object.keys(disks).map(key => disks[key]);
     disks = prettyjson.render(disks);
     disks = indent(disks, ' ', 7);
     sconsole.info('\n'+ disks);
+    done(null, disks);
 }
