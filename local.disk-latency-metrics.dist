@@ -15,10 +15,6 @@
     </array>
     <key>RunAtLoad</key>
     <true/>
-    <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/disk-latency-metrics.log</string>
-    <key>StandardOutPath</key>
-    <string>/usr/local/var/log/disk-latency-metrics.log</string>
     <key>UserName</key>
     <string>root</string>
 </dict>

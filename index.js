@@ -25,7 +25,7 @@ var conf = rc(pkg.name, {
     sconsole: {
         upto: sconsole.priority.info,
         ident: pkg.name,
-        stdio: true,
+        stdio: process.stdin.isTTY,
         syslog: {
             upto: sconsole.priority.error
         }
