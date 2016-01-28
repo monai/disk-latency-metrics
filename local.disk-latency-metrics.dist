@@ -7,7 +7,7 @@
     <key>InitGroups</key>
     <true/>
     <key>Label</key>
-    <string>local.job</string>
+    <string>local.disk-latency-metrics</string>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/bin/node</string>
